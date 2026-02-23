@@ -1,4 +1,4 @@
-# Portfolio React – Fawwaz | Web Developer
+# Portfolio React – Fawwaz Romzi Nagib | Front-End Developer
 
 Selamat datang di website: **Portfolio React milik Fawwaz**.  
 Project ini dibuat menggunakan **React + Vite**, dan berisi berbagai karya web development yang telah saya buat sebagai developer pemula yang terus belajar dan berkembang.
