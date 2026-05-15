@@ -1,5 +1,5 @@
 export const skill = [
-  { name: "back-end developer", persent: 30 },
+  { name: "back-end developer", persent: 20 },
   { name: "front-end developer", persent: 90 },
   { name: "video editing", persent: 50 },
   { name: "creative writing", persent: 50 },
@@ -13,8 +13,35 @@ import growsmart from "../assets/img/growsmart!.png";
 import semusim from "../assets/img/semusim.png";
 import checkcuaca from "../assets/img/checkcuaca.png";
 import undangan from "../assets/img/undangan.png";
+import quran from "../assets/img/quran.png";
+import EduCourse from "../assets/img/educourse.png";
+import ra from "../assets/img/ra.png";
 
 export const project = [
+  {
+    nama: "RA Nurul Huda",
+    slogan: "Belajar ceria, berakhlak mulia",
+    persent: 100,
+    link: "https://ra-nurulhuda.netlify.app/",
+    img: ra,
+    tanggal: "2026-04-14",
+  },
+  {
+    nama: "EduCourse",
+    slogan: "Upgrade skill, buka peluang baru",
+    persent: 90,
+    link: "https://learnfromeducourse.netlify.app/",
+    img: EduCourse,
+    tanggal: "2026-03-03",
+  },
+  {
+    nama: "Quran.me",
+    slogan: "Bringing the Qur'an closer to your daily life",
+    persent: 90,
+    link: "https://project-quranme.netlify.app/",
+    img: quran,
+    tanggal: "2026-04-15",
+  },
   {
     nama: "EduVerse",
     slogan: "learn without limits",
