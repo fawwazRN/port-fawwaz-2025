@@ -1,385 +1,314 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  Calendar,
-  Layers,
-  ChevronRight,
-  ArrowLeft,
-  Sparkles,
-  Aperture,
-  Eye,
-} from "lucide-react";
+import { Search, ArrowRight, X, ArrowUpRight } from "lucide-react";
 import { project as myProject } from "./asset";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function MyProject() {
+  const [showArchive, setShowArchive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const sectionRef = useRef(null);
 
-  // Logic Filter
-  const allProjects = myProject
-    .filter(
-      (item) =>
-        item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.slogan.toLowerCase().includes(searchTerm.toLowerCase()),
+  // ================= LOGIC DATA TOP 3 =================
+  // Nama project yang lu mau (case insensitive)
+  const targetNames = ["quran.me", "growsmart!", "undangannikah"];
+
+  // Cari project yang namanya cocok
+  const matchedProjects = targetNames
+    .map((name) =>
+      myProject.find((p) => p.nama.toLowerCase() === name.toLowerCase()),
     )
-    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    .filter(Boolean);
 
-  const topProjects = allProjects.slice(0, 3);
+  // PENTING: Paksa tampil 3 project. Kalau yang cocok < 3, ambil dari data lainnya
+  let featuredProjects = [...matchedProjects];
+  if (featuredProjects.length < 3) {
+    const remaining = myProject.filter((p) => !featuredProjects.includes(p));
+    featuredProjects = [...featuredProjects, ...remaining].slice(0, 3);
+  }
 
-  // ================= VARIANTS =================
-  const flipContainerVariants = {
-    front: {
-      rotateY: 0,
-      transition: { duration: 1.0, type: "spring", stiffness: 70, damping: 25 },
-    },
-    back: {
-      rotateY: 180,
-      transition: { duration: 1.0, type: "spring", stiffness: 70, damping: 25 },
-    },
-  };
+  // Filter untuk Archive
+  const filteredArchive = myProject.filter(
+    (p) =>
+      p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.slogan.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
-  const gridContainerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-    },
-  };
+  // ================= LOCK SCROLL WHEN ARCHIVE OPEN =================
+  useEffect(() => {
+    if (showArchive) {
+      document.body.style.overflow = "hidden"; // Lock scroll body utama
+    } else {
+      document.body.style.overflow = "auto"; // Unlock scroll
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showArchive]);
 
-  const gridItemVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { type: "spring", stiffness: 100, damping: 15 },
-    },
-  };
+  // ================= GSAP ANIMATION =================
+  useEffect(() => {
+    if (!showArchive) {
+      const ctx = gsap.context(() => {
+        gsap.utils.toArray(".featured-project").forEach((project, i) => {
+          gsap.from(project, {
+            opacity: 0,
+            y: 80,
+            scale: 0.95,
+            duration: 1,
+            ease: "power3.out",
+            scrollTrigger: { trigger: project, start: "top 85%" },
+          });
+        });
+      }, sectionRef);
+      return () => ctx.revert();
+    }
+  }, [showArchive]);
 
   return (
     <section
-      className="top-0 left-0 relative max-md:sticky flex justify-end items-center bg-utama max-md:bg-transparent w-full h-screen overflow-hidden font-jakarta"
-      id="myProject">
-      <div className="flex justify-center items-center max-md:p-0 px-8 py-6 w-4/5 max-md:w-full h-full">
-        <div
-          className="relative w-full h-full"
-          style={{ perspective: "2500px" }}>
+      ref={sectionRef}
+      id="myProject"
+      className="relative bg-slate-950 w-full min-h-screen overflow-hidden font-jakarta">
+      {/* ==================== MAIN SHOWCASE (FRONT) ==================== */}
+      <div className="z-10 relative mx-auto px-6 py-24 md:pr-8 md:pl-28 max-w-6xl">
+        {/* Header */}
+        <div className="flex justify-between items-end mb-16">
+          <div>
+            <span className="block mb-2 font-bold text-utama text-xs uppercase tracking-[4px]">
+              Portfolio
+            </span>
+            <h2 className="font-black text-white text-4xl md:text-6xl leading-tight">
+              Selected
+              <br />
+              Works
+            </h2>
+          </div>
+
+          <motion.button
+            onClick={() => setShowArchive(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="group hidden md:flex items-center gap-3 bg-white/5 hover:bg-utama/10 px-6 py-3 border border-white/10 hover:border-utama/50 rounded-full transition-all duration-300">
+            <span className="font-semibold text-white text-sm">
+              View All Projects
+            </span>
+            <ArrowRight
+              size={16}
+              className="text-utama transition-transform group-hover:translate-x-1"
+            />
+          </motion.button>
+        </div>
+
+        {/* Featured Projects List (Pasti 3 Item) */}
+        <div className="space-y-16 md:space-y-24">
+          {featuredProjects.map((project, index) => (
+            <FeaturedItem
+              key={project.nama}
+              project={project}
+              index={index + 1}
+            />
+          ))}
+        </div>
+
+        {/* Mobile View All Button */}
+        <div className="md:hidden flex justify-center mt-16">
+          <button
+            onClick={() => setShowArchive(true)}
+            className="flex items-center gap-2 font-semibold text-utama">
+            View All Projects <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* ==================== ARCHIVE OVERLAY (FULLSCREEN FIXED) ==================== */}
+      <AnimatePresence>
+        {showArchive && (
           <motion.div
-            variants={flipContainerVariants}
-            animate={showAll ? "back" : "front"}
-            className="absolute inset-0 w-full h-full"
-            style={{ transformStyle: "preserve-3d" }}>
-            {/* ==================== SISI DEPAN (BENTO GRID) ==================== */}
-            <div
-              className="absolute inset-0 w-full h-full"
-              style={{ backfaceVisibility: "hidden" }}>
-              <div className="relative flex flex-col bg-white/95 shadow-2xl backdrop-blur-md p-4 md:p-8 border border-white/50 rounded-[1.75rem] md:rounded-[2.5rem] w-full h-full min-h-0 overflow-hidden">
-                {/* Background Texture */}
-                <div className="absolute inset-0 bg-[radial-gradient(var(--color-slate-900)_1px,transparent_1px)] opacity-[0.02] bg-size-[16px_16px] pointer-events-none"></div>
-                <div className="top-0 right-0 z-0 absolute bg-utama/5 blur-3xl rounded-full w-96 h-96 -translate-y-1/2 translate-x-1/2"></div>
-
-                {/* Header */}
-                <div className="z-10 relative flex flex-col items-center gap-1 md:gap-2 mb-4 md:mb-6 pt-2 shrink-0">
-                  <span className="inline-flex items-center gap-1.5 bg-utama/10 px-3 py-1 rounded-full font-bold text-[10px] text-utama md:text-xs uppercase tracking-[3px]">
-                    <Sparkles size={10} /> Chapter 3
-                  </span>
-                  <h2 className="bg-clip-text bg-linear-to-br from-slate-900 via-slate-800 to-slate-600 font-black text-transparent text-xl md:text-3xl tracking-tight whitespace-nowrap">
-                    Featured Works
-                  </h2>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="z-[999] fixed inset-0 flex flex-col bg-slate-950 overflow-hidden">
+            {/* Container dengan Padding (Responsif) */}
+            <div className="flex flex-col mx-auto px-6 md:px-8 py-8 w-full max-w-6xl h-full overflow-hidden">
+              {/* Archive Header (Fixed di atas) */}
+              <div className="flex flex-shrink-0 justify-between items-center mb-8 pb-4 border-white/10 border-b">
+                <div>
+                  <h3 className="font-bold text-white text-xl md:text-2xl">
+                    All Projects
+                  </h3>
+                  <p className="text-slate-500 text-sm">Archive Collection</p>
                 </div>
 
-                {/* Grid Layout */}
-                <motion.div
-                  variants={gridContainerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="z-10 relative flex-1 gap-3 md:gap-5 grid grid-cols-1 md:grid-cols-2 min-h-0">
-                  {/* Kolom Kiri: Project Utama (Hero) */}
-                  {topProjects[0] && (
-                    <motion.div
-                      variants={gridItemVariants}
-                      layout
-                      onClick={() => window.open(topProjects[0].link, "_blank")}
-                      className="group relative shadow-2xl rounded-2xl md:rounded-3xl h-56 md:h-full overflow-hidden cursor-pointer">
-                      <img
-                        src={topProjects[0].img}
-                        className="absolute w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
-
-                      {/* Frame Effect */}
-                      <div className="absolute inset-0 border-4 border-white/5 group-hover:border-utama/30 rounded-2xl md:rounded-3xl transition-colors pointer-events-none"></div>
-
-                      <div className="bottom-0 left-0 absolute p-5 md:p-8 text-white">
-                        {/* Badge Best Pick */}
-                        <div className="inline-flex items-center gap-1.5 bg-utama shadow-lg shadow-utama/30 mb-2 md:mb-3 px-2.5 py-1 rounded-full w-fit font-bold text-[10px] md:text-xs uppercase tracking-wider whitespace-nowrap">
-                          <Sparkles size={10} className="text-yellow-300" />
-                          <span>Best Pick</span>
-                        </div>
-
-                        <h3 className="drop-shadow-xl font-black group-hover:text-utama text-xl md:text-4xl uppercase line-clamp-2 leading-tight tracking-tight transition-colors duration-300">
-                          {topProjects[0].nama}
-                        </h3>
-                        <p className="hidden md:block mt-3 pl-3 border-utama/50 border-l-2 font-light text-slate-300 text-sm line-clamp-2">
-                          {topProjects[0].slogan}
-                        </p>
-                      </div>
-
-                      <div className="top-4 right-4 absolute bg-white/20 opacity-0 group-hover:opacity-100 backdrop-blur-md p-2 rounded-full scale-50 group-hover:scale-100 transition-all duration-300 transform">
-                        <Eye size={18} className="text-white" />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Kolom Kanan: Grid Stack */}
-                  <div className="flex flex-col gap-3 md:gap-5 h-full min-h-0">
-                    {topProjects[1] && (
-                      <motion.div
-                        variants={gridItemVariants}
-                        layout
-                        onClick={() =>
-                          window.open(topProjects[1].link, "_blank")
-                        }
-                        className="group relative flex-1 shadow-lg rounded-2xl md:rounded-3xl h-36 md:h-auto min-h-[140px] overflow-hidden cursor-pointer">
-                        <img
-                          src={topProjects[1].img}
-                          className="absolute w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-slate-900/90 to-transparent" />
-                        <div className="bottom-0 left-0 absolute p-4 md:p-6 text-white">
-                          <h3 className="font-bold group-hover:text-utama text-base md:text-xl line-clamp-1 transition-colors">
-                            {topProjects[1].nama}
-                          </h3>
-                          <p className="mt-1 text-[10px] text-slate-300 md:text-xs line-clamp-1">
-                            {topProjects[1].slogan}
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Baris Bawah: Project 3 & View All */}
-                    <div className="flex md:flex-row flex-col flex-1 gap-3 md:gap-5 min-h-0">
-                      {topProjects[2] && (
-                        <motion.div
-                          variants={gridItemVariants}
-                          layout
-                          onClick={() =>
-                            window.open(topProjects[2].link, "_blank")
-                          }
-                          className="group relative flex-1 shadow-md rounded-2xl md:rounded-3xl h-28 md:h-auto min-h-[100px] overflow-hidden cursor-pointer">
-                          <img
-                            src={topProjects[2].img}
-                            className="absolute w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                          />
-                          <div className="absolute inset-0 bg-linear-to-t from-slate-900/90 to-transparent" />
-                          <div className="bottom-0 left-0 absolute p-3 md:p-5 text-white">
-                            <h3 className="font-bold group-hover:text-utama text-sm md:text-lg line-clamp-1 transition-colors">
-                              {topProjects[2].nama}
-                            </h3>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Tombol View All - Diperbaiki Responsive */}
-                      <motion.div
-                        variants={gridItemVariants}
-                        layout
-                        onClick={() => setShowAll(true)}
-                        className="group relative flex-1 justify-center items-center bg-linear-to-br from-slate-900 to-slate-950 shadow-xl p-4 border border-slate-800 rounded-2xl md:rounded-3xl min-h-[100px] md:min-h-0 overflow-hidden cursor-pointer">
-                        {/* Animated Background Glow */}
-                        <div className="absolute inset-0 bg-linear-to-br from-utama/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05),transparent_70%)]" />
-
-                        <div className="z-10 relative flex flex-col justify-center items-center h-full text-center">
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 20,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                            className="mb-1 md:mb-2">
-                            <Aperture
-                              size={24}
-                              className="opacity-80 group-hover:opacity-100 mx-auto text-utama transition-opacity"
-                            />
-                          </motion.div>
-                          <span className="font-bold text-white group-hover:text-utama text-xs md:text-sm whitespace-nowrap transition-colors">
-                            View All
-                          </span>
-                          <span className="block mt-0.5 text-[9px] text-slate-500 group-hover:text-slate-300 transition-colors">
-                            {myProject.length} Projects
-                          </span>
-                        </div>
-                      </motion.div>
-                    </div>
-                  </div>
-                </motion.div>
+                <button
+                  onClick={() => setShowArchive(false)}
+                  className="group bg-white/5 hover:bg-red-500/20 p-3 border border-white/10 hover:border-red-500 rounded-full transition-colors">
+                  <X
+                    size={20}
+                    className="text-white group-hover:text-red-500"
+                  />
+                </button>
               </div>
-            </div>
 
-            {/* ==================== SISI BELAKANG (THE ARCHIVE) ==================== */}
-            <div
-              className="absolute inset-0 w-full h-full"
-              style={{
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-              }}>
-              {/* Dark Theme Container */}
-              <div className="relative flex flex-col bg-slate-950 shadow-2xl border border-slate-800 rounded-[2.5rem] w-full h-full overflow-hidden text-white">
-                {/* Ambient Light Effects */}
-                <div className="top-0 left-1/4 absolute bg-utama/10 blur-[120px] rounded-full w-96 h-96 pointer-events-none"></div>
-                <div className="right-0 bottom-0 absolute bg-emerald-500/5 blur-[100px] rounded-full w-64 h-64 pointer-events-none"></div>
-
-                {/* Header Section */}
-                <div className="z-20 relative flex flex-col gap-3 md:gap-4 bg-slate-900/50 backdrop-blur-xl p-4 md:p-6 border-white/5 border-b shrink-0">
-                  <div className="flex justify-between items-center w-full">
-                    <motion.button
-                      whileHover={{ x: -5 }}
-                      onClick={() => setShowAll(false)}
-                      className="flex items-center gap-2 hover:bg-white/5 px-3 py-1.5 rounded-full text-slate-400 hover:text-white transition-colors">
-                      <ArrowLeft size={16} />
-                      <span className="hidden md:block font-semibold text-xs">
-                        Back
-                      </span>
-                    </motion.button>
-
-                    <div className="flex flex-col flex-1 items-center text-center">
-                      <span className="mb-0.5 text-[9px] text-utama/80 uppercase tracking-[6px]">
-                        Archive
-                      </span>
-                      <h2 className="font-black text-white text-lg md:text-2xl tracking-tight">
-                        All Projects
-                      </h2>
-                    </div>
-
-                    <div className="w-16 md:w-20"></div>
-                  </div>
-
-                  {/* Search Bar */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="group relative mx-auto w-full max-w-md">
-                    <div className="absolute inset-0 bg-utama/20 opacity-0 group-focus-within:opacity-60 blur-md rounded-xl transition-opacity duration-500"></div>
-                    <div className="relative flex items-center bg-slate-800/60 border border-white/5 group-focus-within:border-utama/50 rounded-xl overflow-hidden transition-colors">
-                      <Search
-                        className="ml-3 text-slate-500 group-focus-within:text-utama transition-colors"
-                        size={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Search archive..."
-                        className="bg-transparent py-2.5 pr-4 pl-2 outline-none w-full font-medium text-white placeholder:text-slate-600 text-xs md:text-sm"
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                  </motion.div>
+              {/* Search Bar */}
+              <div className="group relative flex-shrink-0 mb-6">
+                <div className="absolute inset-0 bg-utama/20 opacity-0 group-focus-within:opacity-100 blur-xl rounded-full transition-opacity"></div>
+                <div className="relative flex items-center bg-slate-900 px-6 py-3 border border-white/10 group-focus-within:border-utama/50 rounded-full transition-colors">
+                  <Search size={18} className="mr-3 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search project by name..."
+                    className="bg-transparent outline-none w-full text-white placeholder:text-slate-600 text-sm"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
+              </div>
 
-                {/* Grid Gallery Area - Responsive Vertical Grid */}
-                <div className="z-10 relative flex-1 bg-transparent p-4 md:p-6 min-h-0 overflow-x-hidden overflow-y-auto custom-scrollbar-dark">
-                  <motion.div
-                    layout
-                    className="gap-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                    <AnimatePresence mode="popLayout">
-                      {allProjects.length > 0 ? (
-                        allProjects.map((item, index) => (
-                          <motion.div
-                            layout
-                            key={item.nama}
-                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{
-                              opacity: 0,
-                              scale: 0.9,
-                              filter: "blur(10px)",
-                            }}
-                            transition={{ duration: 0.4, delay: index * 0.03 }}
-                            className="group relative h-full">
-                            <a
-                              href={item.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex flex-col bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-utama/10 border border-white/5 hover:border-utama/30 rounded-2xl h-full overflow-hidden transition-all duration-300 cursor-pointer">
-                              {/* Image Section */}
-                              <div className="relative h-28 md:h-36 overflow-hidden">
-                                <img
-                                  src={item.img}
-                                  alt={item.nama}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent opacity-40"></div>
-                              </div>
-
-                              {/* Content Section */}
-                              <div className="relative flex flex-col flex-1 p-3 md:p-4">
-                                <h3 className="mb-1 font-bold text-white group-hover:text-utama text-xs md:text-sm line-clamp-2 leading-snug transition-colors">
-                                  {item.nama}
-                                </h3>
-                                <p className="hidden md:block mb-2 text-[10px] text-slate-400 line-clamp-1">
-                                  {item.slogan}
-                                </p>
-
-                                <div className="flex justify-between items-center mt-auto pt-2 border-white/5 border-t">
-                                  <div className="flex items-center gap-1 text-[9px] text-slate-500 md:text-[10px]">
-                                    <Calendar size={10} />
-                                    {item.tanggal}
-                                  </div>
-                                  <motion.div
-                                    whileHover={{ x: 3 }}
-                                    className="flex items-center gap-0.5 font-bold text-[10px] text-utama group-hover:text-white transition-colors">
-                                    Open <ChevronRight size={12} />
-                                  </motion.div>
-                                </div>
-                              </div>
-                            </a>
-                          </motion.div>
-                        ))
-                      ) : (
-                        <motion.div
-                          key="no-result"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="flex flex-col justify-center items-center col-span-full h-64 text-center">
-                          <div className="bg-slate-800 mb-4 p-4 border border-white/5 rounded-full">
-                            <Search size={32} className="text-slate-600" />
-                          </div>
-                          <p className="font-semibold text-slate-400 text-lg">
-                            No Projects Found
+              {/* Scrollable Grid Area */}
+              <div className="flex-1 -mx-2 px-2 pb-4 overflow-y-auto scrollbar-hide custom-scrollbar-dark">
+                <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredArchive.length > 0 ? (
+                    filteredArchive.map((project) => (
+                      <motion.a
+                        href={project.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        key={project.nama}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="group block relative bg-slate-900/50 border border-white/5 hover:border-utama/30 rounded-xl overflow-hidden transition-all duration-300">
+                        <div className="aspect-video overflow-hidden">
+                          <img
+                            src={project.img}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="p-5">
+                          <h4 className="mb-1 font-bold text-white group-hover:text-utama text-lg transition-colors">
+                            {project.nama}
+                          </h4>
+                          <p className="text-slate-400 text-sm line-clamp-2">
+                            {project.slogan}
                           </p>
-                          <p className="mt-1 text-slate-600 text-sm">
-                            Try searching for something else...
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
+                        </div>
+                      </motion.a>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-20 text-slate-500 text-center">
+                      Project not found.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+// ================= SUB COMPONENT: FEATURED ITEM =================
+function FeaturedItem({ project, index }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const itemRef = useRef(null);
+
+  // Magnetic Effect for the "View" button
+  const handleMagnetic = (e) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    gsap.to(btn.querySelector(".magnetic-inner"), {
+      x: x * 0.3,
+      y: y * 0.3,
+      duration: 0.2,
+    });
+  };
+
+  const resetMagnetic = (e) => {
+    gsap.to(e.currentTarget.querySelector(".magnetic-inner"), {
+      x: 0,
+      y: 0,
+      duration: 0.5,
+      ease: "elastic.out(1, 0.3)",
+    });
+  };
+
+  return (
+    <div
+      ref={itemRef}
+      className="items-center gap-8 grid md:grid-cols-12 featured-project">
+      {/* Left: Number & Text */}
+      <div className="z-10 relative order-2 md:order-1 md:col-span-5">
+        <span className="-top-10 left-0 absolute font-black text-[100px] text-white/5 md:text-[150px] leading-none pointer-events-none select-none">
+          0{index}
+        </span>
+
+        <div className="relative mt-10 md:mt-16">
+          <span className="block mb-2 font-bold text-utama text-xs uppercase tracking-[4px]">
+            Featured Project
+          </span>
+          <h3 className="mb-4 font-black text-white text-3xl md:text-5xl leading-tight">
+            {project.nama}
+          </h3>
+          <p className="mb-6 max-w-md text-slate-400 text-sm md:text-base leading-relaxed">
+            {project.slogan}
+          </p>
+
+          {/* Tech Stack / Tags bisa ditambahin di sini kalau ada datanya */}
+
+          <motion.a
+            href={project.link}
+            target="_blank"
+            rel="noreferrer"
+            onMouseMove={handleMagnetic}
+            onMouseLeave={resetMagnetic}
+            className="group inline-flex relative items-center gap-3 bg-white shadow-white/10 shadow-xl hover:shadow-white/20 px-8 py-4 rounded-full overflow-hidden font-bold text-slate-950 text-sm transition-shadow">
+            <span className="z-10 relative flex items-center gap-3 magnetic-inner">
+              View Project
+              <ArrowUpRight
+                size={18}
+                className="group-hover:rotate-45 transition-transform"
+              />
+            </span>
+          </motion.a>
         </div>
       </div>
 
-      {/* Custom CSS for Dark Scrollbar */}
-      <style>{`
-        .custom-scrollbar-dark::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar-dark::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-          background: #334155; /* slate-700 */
-          border-radius: 20px;
-        }
-        .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-          background: #475569; /* slate-600 */
-        }
-      `}</style>
-    </section>
+      {/* Right: Image */}
+      <div
+        className="group relative order-1 md:order-2 md:col-span-7"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}>
+        <div className="relative shadow-2xl border border-white/10 rounded-2xl w-full md:h-[400px] aspect-[4/3] md:aspect-auto overflow-hidden">
+          <img
+            src={project.img}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+          />
+          {/* Overlay */}
+          <motion.div
+            animate={{ opacity: isHovered ? 0.2 : 0 }}
+            className="absolute inset-0 bg-utama pointer-events-none"
+          />
+        </div>
+
+        {/* Floating Badge */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bottom-8 -left-4 md:-left-8 absolute flex items-center gap-2 bg-slate-900 backdrop-blur-md px-4 py-2 border border-white/10 rounded-xl text-white text-xs">
+          <span className="bg-green-400 rounded-full w-2 h-2 animate-pulse"></span>
+          Completed
+        </motion.div>
+      </div>
+    </div>
   );
 }

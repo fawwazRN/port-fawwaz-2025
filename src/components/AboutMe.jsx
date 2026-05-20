@@ -1,255 +1,260 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { User, MapPin, Briefcase, GraduationCap, Code } from "lucide-react";
+import {
+  User,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Download,
+  ExternalLink,
+} from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import fawwaz from "../assets/img/fawwaz.png";
 
-// ================= ANIMATION VARIANTS =================
-
-// Variasi untuk Container Utama (Orchestration)
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.4,
-    },
-  },
-};
-
-// Variasi untuk Elemen Umum (Slide Up dengan Blur)
-const itemVariants = {
-  hidden: { y: 30, opacity: 0, filter: "blur(8px)" },
-  visible: {
-    y: 0,
-    opacity: 1,
-    filter: "blur(0px)",
-    transition: {
-      type: "spring",
-      stiffness: 80,
-      damping: 15,
-      mass: 1,
-    },
-  },
-};
-
-// Variasi untuk Gambar (Scale & Rotate 3D Effect)
-const imageVariants = {
-  hidden: { scale: 0.8, opacity: 0, rotateY: -15 },
-  visible: {
-    scale: 1,
-    opacity: 1,
-    rotateY: 0,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 15,
-      duration: 0.8,
-    },
-  },
-};
-
-// Variasi untuk Kartu Info (Hover state terpisah)
-const cardHover = {
-  rest: { scale: 1, y: 0, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" },
-  hover: {
-    scale: 1.03,
-    y: -5,
-    boxShadow:
-      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-    transition: { type: "spring", stiffness: 300 },
-  },
-};
+gsap.registerPlugin(ScrollTrigger);
 
 export default function AboutMe() {
+  const sectionRef = useRef(null);
+  const imageRef = useRef(null);
+  const nameRef = useRef(null);
+  const contentRef = useRef(null);
+  const [activeTooltip, setActiveTooltip] = useState(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        imageRef.current,
+        { scale: 1.2, opacity: 0, filter: "grayscale(100%)" },
+        {
+          scale: 1,
+          opacity: 1,
+          filter: "grayscale(0%)",
+          duration: 1.5,
+          ease: "power3.out",
+          scrollTrigger: { trigger: sectionRef.current, start: "top 60%" },
+        },
+      );
+
+      if (nameRef.current) {
+        const text = "Fawwaz Romzi Nagib";
+        nameRef.current.innerHTML = "";
+        text.split("").forEach((char) => {
+          nameRef.current.innerHTML +=
+            char === " "
+              ? `<span class="inline-block w-4"></span>`
+              : `<span class="inline-block opacity-0 translate-y-10 char">${char}</span>`;
+        });
+        gsap.to(".char", {
+          opacity: 1,
+          y: 0,
+          stagger: 0.05,
+          duration: 0.8,
+          ease: "back.out(1.7)",
+          scrollTrigger: { trigger: nameRef.current, start: "top 80%" },
+        });
+      }
+
+      gsap.fromTo(
+        ".anim-item",
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          stagger: 0.1,
+          duration: 0.8,
+          ease: "power2.out",
+          scrollTrigger: { trigger: contentRef.current, start: "top 70%" },
+        },
+      );
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
+  const infoData = [
+    {
+      icon: GraduationCap,
+      label: "Education",
+      value: "10th Grade, Abudzar IT",
+    },
+    { icon: MapPin, label: "Location", value: "Indonesia" },
+    { icon: Briefcase, label: "Focus", value: "Fullstack Dev" },
+    { icon: User, label: "Experience", value: "2+ Years Coding" },
+  ];
+
+  const projectHighlights = [
+    {
+      name: "Indotravel",
+      desc: "A comprehensive travel platform showcasing the beauty of Indonesia.",
+      link: "https://indotravel.com",
+      img: "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?q=80&w=500&auto=format&fit=crop",
+    },
+    {
+      name: "Eduverse",
+      desc: "An innovative educational metaverse platform for immersive learning.",
+      link: "https://eduverse.com",
+      img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=500&auto=format&fit=crop",
+    },
+  ];
+
+  const handleCardMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+    card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+  };
+
   return (
     <section
-      className="top-0 max-md:bottom-0 left-0 relative max-md:sticky flex justify-end items-center bg-utama max-md:bg-transparent mt-[100vh] w-full h-screen font-jakarta text-slate-900"
-      id="aboutMe">
-      <motion.div
-        className="top-0 left-0 flex justify-center items-center max-md:p-0 px-12.5 py-6.25 w-4/5 max-md:w-full h-full"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={containerVariants}>
-        {/* Card Utama dengan Texture Overlay */}
-        <div className="relative space-y-10 bg-white/95 shadow-2xl backdrop-blur-sm p-10 max-md:p-6 border border-slate-200/50 rounded-3xl w-full h-full overflow-x-hidden overflow-y-auto">
-          {/* Decorative Subtle Pattern (Background Texture) */}
-          <div className="absolute inset-0 bg-[radial-gradient(var(--color-slate-900)_1px,transparent_1px)] opacity-[0.03] bg-size-[20px_20px] pointer-events-none mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+      ref={sectionRef}
+      id="aboutMe"
+      className="relative bg-slate-950 py-24 md:py-32 w-full min-h-screen font-jakarta">
+      <div className="top-1/3 left-1/4 absolute bg-utama/5 blur-[150px] rounded-full w-96 h-96 pointer-events-none"></div>
 
-          {/* Header Bagian */}
-          <motion.div
-            className="z-10 relative flex justify-center items-center gap-4 w-full"
-            variants={itemVariants}>
-            <motion.span
-              initial={{ width: 0 }}
-              whileInView={{ width: "100%" }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="bg-linear-to-r from-transparent via-slate-300 to-transparent h-px"></motion.span>
-            <div className="flex-none px-4 min-w-fit text-center">
-              <motion.span
-                initial={{ opacity: 0, y: -10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block bg-utama/10 mb-1 px-3 py-1 rounded-full font-bold text-utama text-xs uppercase tracking-[4px]">
-                Chapter 1
-              </motion.span>
-              <h2 className="font-bold text-slate-950 max-md:text-3xl text-4xl tracking-tight">
-                About Me
-              </h2>
-            </div>
-            <motion.span
-              initial={{ width: 0 }}
-              whileInView={{ width: "100%" }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="bg-linear-to-r from-transparent via-slate-300 to-transparent h-px"></motion.span>
-          </motion.div>
+      <div className="z-10 relative mx-auto px-6 md:pr-8 md:pl-28 max-w-6xl h-full">
+        <div className="flex items-center gap-4 mb-16 anim-item">
+          <div className="bg-utama/10 p-2 border border-utama/30 rounded-lg">
+            <User size={18} className="text-utama" />
+          </div>
+          <h2 className="font-bold text-white text-xl md:text-2xl tracking-tight">
+            About Me
+          </h2>
+          <div className="flex-1 bg-gradient-to-r from-slate-700 to-transparent h-px"></div>
+        </div>
 
-          <div className="z-10 relative gap-10 max-md:gap-8 grid grid-cols-1 md:grid-cols-[300px,1fr] w-full">
-            {/* Bagian Gambar */}
-            <motion.div
-              className="relative flex flex-col items-center gap-4"
-              variants={imageVariants}>
-              <motion.div
-                className="group relative cursor-pointer"
-                whileHover={{ y: -5 }}>
-                {/* Foto dengan Border Dekoratif */}
-                <div className="absolute inset-0 bg-utama/20 rounded-3xl transition-transform translate-x-3 translate-y-3 group-hover:translate-x-2 group-hover:translate-y-2 duration-300 ease-out"></div>
-                <div className="relative shadow-lg border-4 border-white rounded-3xl overflow-hidden">
-                  <img
-                    src={fawwaz}
-                    alt="Fawwaz Romzi Nagib"
-                    className="w-full h-[350px] max-md:h-60 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                  />
-                  {/* Overlay Gradient saat Hover */}
-                  <div className="absolute inset-0 flex justify-center items-end bg-linear-to-t from-utama/80 via-utama/20 to-transparent opacity-0 group-hover:opacity-100 pb-6 transition-opacity duration-500">
-                    <span className="opacity-0 group-hover:opacity-100 font-bold text-white text-sm uppercase tracking-wider transition-all translate-y-4 group-hover:translate-y-0 duration-300 delay-100">
-                      View Profile
-                    </span>
-                  </div>
-                </div>
-
-                {/* Frame Sudut (Legacy Touch) */}
-                <div className="top-0 left-0 absolute border-utama border-t-2 border-l-2 rounded-tl-xl w-6 h-6"></div>
-                <div className="right-0 bottom-0 absolute border-utama border-r-2 border-b-2 rounded-br-xl w-6 h-6"></div>
-              </motion.div>
-
-              <div className="mt-2 text-center">
-                <h3 className="font-bold text-slate-950 text-2xl tracking-tight">
-                  Fawwaz Romzi Nagib
-                </h3>
-                <p className="flex justify-center items-center gap-1.5 mt-1 font-medium text-utama text-sm">
-                  <Code size={16} className="animate-pulse" /> IT Enthusiast |
-                  10th Grade
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Bagian Teks & Detail */}
-            <motion.div className="space-y-8" variants={itemVariants}>
-              {/* Heading dengan Efek Reveal */}
-              <div className="relative py-2 pl-6 border-utama border-l-4 overflow-hidden">
-                <h1 className="font-light text-slate-500 max-md:text-3xl text-4xl leading-tight">
-                  <span className="font-bold text-slate-950">Hello...</span> My
-                  name is
-                </h1>
-                {/* Nama dengan Gradient Text */}
-                <h2 className="relative bg-clip-text bg-linear-to-r from-utama via-emerald-600 to-utama drop-shadow-sm mt-1 font-extrabold text-transparent max-md:text-4xl text-5xl italic tracking-tight">
-                  Fawwaz Romzi Nagib
-                </h2>
-                {/* Garis Bawah Animasi */}
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: "60%" }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                  className="bottom-0 left-6 absolute bg-utama/20 rounded-full h-1"
+        <div className="items-center gap-12 md:gap-16 grid md:grid-cols-5">
+          {/* Image Column */}
+          <div className="flex justify-center md:col-span-2 anim-item">
+            <div className="group relative w-64 md:w-72 h-80 md:h-96">
+              <div className="absolute -inset-2 bg-utama/20 opacity-0 group-hover:opacity-60 blur-xl rounded-3xl transition-opacity duration-500"></div>
+              <div className="z-10 absolute inset-0 border-2 border-utama/20 rounded-3xl rotate-3 group-hover:rotate-0 transition-transform duration-500 transform"></div>
+              <div className="z-0 relative shadow-2xl rounded-3xl w-full h-full overflow-hidden">
+                <img
+                  ref={imageRef}
+                  src={fawwaz}
+                  alt="Fawwaz"
+                  className="grayscale group-hover:grayscale-0 w-full h-full object-cover transition-all duration-700"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
               </div>
-
-              {/* Biografi dengan Glassmorphism */}
               <motion.div
-                className="group relative bg-slate-50/80 shadow-sm backdrop-blur-sm p-6 border border-slate-100 rounded-2xl overflow-hidden"
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 200 }}>
-                {/* Decorative Quote Icon */}
-                <div className="-top-2 -left-2 absolute font-serif text-utama/10 text-8xl select-none">
-                  “
-                </div>
-                <p className="z-10 relative text-slate-700 max-md:text-base text-lg leading-relaxed">
-                  A dedicated student at the{" "}
-                  <strong className="relative text-slate-900">
-                    Abudzar Tahfizh Plus IT Islamic boarding school
-                    <motion.span
-                      className="bottom-0 left-0 absolute bg-utama/20 w-full h-1"
-                      initial={{ scaleX: 0 }}
-                      whileHover={{ scaleX: 1 }}
-                      transition={{ duration: 0.3 }}></motion.span>
-                  </strong>{" "}
-                  with a profound passion for Information Technology. He
-                  actively builds experiences through diverse projects like{" "}
-                  <span className="font-bold text-utama">Indotravel</span>,{" "}
-                  <span className="font-bold text-utama">Webkita</span>,{" "}
-                  <span className="font-bold text-utama">Portfolio</span>, and{" "}
-                  <span className="font-bold text-utama">Eduverse</span>,
-                  thriving in collaborative group environments.
-                </p>
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="-right-4 -bottom-4 z-20 absolute flex items-center gap-2 bg-white shadow-lg px-4 py-2 rounded-xl font-bold text-slate-900 text-xs">
+                <span className="bg-green-500 rounded-full w-2 h-2 animate-pulse"></span>
+                Open to Work
               </motion.div>
+            </div>
+          </div>
 
-              {/* Detail Kunci (Grid Cards) */}
-              <motion.div
-                className="gap-5 grid grid-cols-2 max-sm:grid-cols-1 pt-4"
-                variants={containerVariants}>
-                {[
-                  {
-                    icon: GraduationCap,
-                    label: "Education",
-                    value: "10th Grade High School",
-                  },
-                  {
-                    icon: MapPin,
-                    label: "Location",
-                    value: "Islamic Boarding School, Indonesia",
-                  },
-                  {
-                    icon: Briefcase,
-                    label: "Role",
-                    value: "Aspiring IT Professional",
-                  },
-                  {
-                    icon: User,
-                    label: "Focus",
-                    value: "Learning & Collaboration",
-                  },
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial="rest"
-                    whileHover="hover"
-                    animate="rest"
-                    className="flex items-start gap-4 bg-white p-4 border border-slate-100 rounded-xl transition-colors duration-300"
-                    variants={cardHover}>
-                    <motion.div
-                      className="bg-utama/10 group-hover:bg-utama p-2.5 rounded-lg text-utama group-hover:text-white transition-colors duration-300"
-                      whileHover={{
-                        rotate: [0, -10, 10, 0],
-                        transition: { duration: 0.4 },
-                      }}>
-                      <item.icon className="w-6 h-6" strokeWidth={1.5} />
-                    </motion.div>
+          {/* Content Column */}
+          <div ref={contentRef} className="space-y-8 md:col-span-3">
+            <div className="space-y-3">
+              <p className="text-slate-400 text-lg anim-item">Hello! I am</p>
+              <h2
+                ref={nameRef}
+                className="font-black text-white text-4xl md:text-5xl leading-tight tracking-tight"></h2>
+              <div className="bg-utama rounded-full w-24 h-1.5 anim-item"></div>
+            </div>
+
+            {/* Bio Text - FIXED LOGIC */}
+            <p className="z-40 relative pl-4 border-utama/30 border-l-2 text-slate-300 text-base md:text-lg leading-relaxed anim-item">
+              I am a 10th-grade student at{" "}
+              <span className="font-semibold text-white">
+                Abudzar Tahfizh Plus IT
+              </span>{" "}
+              combining tech passion with discipline. I specialize in scalable
+              web apps and have contributed to{" "}
+              {projectHighlights.map((project, index) => (
+                <span key={project.name}>
+                  {index > 0 && <span className="text-slate-300"> and </span>}
+
+                  {/* Container Hover Area - SATU AREA UNTUK TEKS & TOOLTIP */}
+                  <span
+                    className="inline-block relative"
+                    onMouseEnter={() => setActiveTooltip(project.name)}
+                    onMouseLeave={() => setActiveTooltip(null)}>
+                    <span className="relative font-semibold text-utama hover:text-white transition-colors cursor-pointer">
+                      {project.name}
+                      <span className="bottom-0 left-0 absolute bg-utama/50 w-full h-0.5 scale-x-0 hover:scale-x-100 origin-left transition-transform"></span>
+                    </span>
+
+                    {/* TOOLTIP - Z-INDEX PALING TINGGI */}
+                    {activeTooltip === project.name && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="top-full left-0 z-[999] absolute pt-2" // pt-2 jembatan biar gk ilang
+                      >
+                        <div className="bg-slate-900 shadow-2xl backdrop-blur-md border border-white/10 rounded-xl w-72 overflow-hidden">
+                          <img
+                            src={project.img}
+                            alt={project.name}
+                            className="w-full h-32 object-cover"
+                          />
+                          <div className="p-4">
+                            <h4 className="mb-1 font-bold text-white text-lg">
+                              {project.name}
+                            </h4>
+                            <p className="mb-3 text-slate-400 text-xs leading-relaxed">
+                              {project.desc}
+                            </p>
+                            <a
+                              href={project.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex justify-center items-center gap-2 bg-utama hover:bg-utama/80 py-2 rounded-lg w-full font-semibold text-white text-xs transition-colors">
+                              Visit Site <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </span>
+                </span>
+              ))}
+              .
+            </p>
+
+            {/* Cards Grid */}
+            <div className="gap-4 grid grid-cols-2 pt-4">
+              {infoData.map((item, index) => (
+                <div
+                  key={index}
+                  onMouseMove={handleCardMove}
+                  className="group relative bg-slate-900/50 p-4 border border-white/5 hover:border-utama/30 rounded-xl overflow-hidden transition-all duration-300 anim-item"
+                  style={{
+                    background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(16, 185, 129, 0.15), transparent 40%)`,
+                  }}>
+                  <div className="relative flex items-center gap-3">
+                    <div className="bg-utama/10 group-hover:bg-utama p-2 rounded-lg text-utama group-hover:text-white transition-colors duration-300">
+                      <item.icon size={16} />
+                    </div>
                     <div>
-                      <p className="font-medium text-slate-400 text-xs uppercase tracking-wider">
+                      <p className="font-medium text-[10px] text-slate-500 uppercase tracking-wider">
                         {item.label}
                       </p>
-                      <p className="mt-0.5 font-semibold text-slate-950 text-base">
+                      <p className="font-bold text-white text-sm">
                         {item.value}
                       </p>
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <motion.a
+              href="#contact"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-3 bg-utama shadow-lg shadow-utama/20 hover:shadow-utama/40 mt-4 px-8 py-3.5 rounded-xl font-bold text-white text-sm transition-all duration-300 anim-item">
+              Let's Collaborate <Download size={18} />
+            </motion.a>
           </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

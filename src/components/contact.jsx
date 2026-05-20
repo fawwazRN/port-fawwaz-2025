@@ -1,247 +1,254 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  Send,
+  Mail,
   MessageSquareText,
   User,
-  Smartphone,
+  Send,
   MapPin,
-  Sparkles,
+  Phone,
   ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Contact() {
-  const [NDepan, setNDepan] = useState("");
-  const [NBelakang, setNBelakang] = useState("");
-  const [Message, setMessage] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+  const [isHovered, setIsHovered] = useState(false);
+  const sectionRef = useRef(null);
+  const cardRef = useRef(null);
+  const contentRef = useRef(null);
 
-  const submit = (e) => {
+  // ================= GSAP CINEMATIC ENTRANCE =================
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // 1. Container Masuk dari bawah dengan blur
+      gsap.from(cardRef.current, {
+        y: 150,
+        opacity: 0,
+        scale: 0.9,
+        filter: "blur(20px)",
+        duration: 1.5,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 60%",
+        },
+      });
+
+      // 2. Content di dalam kartu muncul berurutan (Stagger)
+      gsap.from(contentRef.current.children, {
+        y: 50,
+        opacity: 0,
+        stagger: 0.1,
+        duration: 1,
+        ease: "back.out(1.5)",
+        delay: 0.5, // Tunggu kartu sedikit
+        scrollTrigger: {
+          trigger: cardRef.current,
+          start: "top 80%",
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // ================= LOGIC SEND EMAIL =================
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const noHP = "0000000000"; // Ganti dengan nomor Anda
-    const text = `Halo, saya ${NDepan} ${NBelakang}%0A%0A${Message}`;
-    const masukWA = `https://api.whatsapp.com/send?phone=62${noHP}&text=${text}`;
-    window.open(masukWA, "_blank");
+    const { name, email, message } = formData;
+
+    // Format Email Content
+    const subject = `New Message from Portfolio - ${name}`;
+    const body = `From: ${name} (${email})%0D%0A%0D%0A${message}`;
+
+    // Buka Email Client (mailto:)
+    window.location.href = `mailto:fawwaz1511@student.abudzar.sch.id?subject=${subject}&body=${body}`;
   };
 
-  // ================= VARIANTS =================
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.3 },
-    },
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: { type: "spring", stiffness: 100, damping: 15 },
-    },
+  // ================= 3D TILT LOGIC =================
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -10; // Maks 10 derajat
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    gsap.to(cardRef.current, {
+      rotateX: rotateX,
+      rotateY: rotateY,
+      duration: 0.5,
+      ease: "power1.out",
+      transformPerspective: 1000,
+    });
   };
 
-  const glowVariants = {
-    initial: { opacity: 0.5, scale: 0.9 },
-    animate: {
-      opacity: 0.8,
-      scale: 1,
-      transition: { duration: 2, repeat: Infinity, repeatType: "reverse" },
-    },
+  const handleMouseLeave = () => {
+    gsap.to(cardRef.current, {
+      rotateX: 0,
+      rotateY: 0,
+      duration: 0.8,
+      ease: "elastic.out(1, 0.5)",
+    });
   };
 
   return (
     <section
-      className="top-0 left-0 relative max-md:sticky flex justify-end items-center bg-utama max-md:bg-transparent w-full h-screen overflow-hidden font-jakarta"
-      id="contact">
+      ref={sectionRef}
+      id="contact"
+      className="relative flex justify-center items-center bg-slate-950 py-24 md:py-32 w-full min-h-screen overflow-hidden font-jakarta">
+      {/* Ambient "Breathing" Light Effect */}
       <motion.div
-        className="top-0 left-0 flex justify-center items-center max-md:p-0 px-12.5 py-6.25 w-4/5 max-md:w-full h-full"
-        initial={{ opacity: 0, x: 50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: "easeOut" }}>
-        {/* Main Card Container */}
-        <div className="relative flex flex-col bg-white/90 shadow-2xl backdrop-blur-md p-6 md:p-10 border border-white/50 rounded-[1.75rem] md:rounded-[2.5rem] w-full h-full overflow-hidden max-sm:overflow-scroll">
-          {/* Ambient Background Effects */}
-          <div className="top-0 right-0 z-0 absolute bg-utama/5 blur-3xl rounded-full w-96 h-96 -translate-y-1/2 translate-x-1/2"></div>
-          <div className="bottom-0 left-0 z-0 absolute bg-emerald-100/50 blur-3xl rounded-full w-64 h-64 -translate-x-1/2 translate-y-1/2"></div>
+        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="top-1/2 left-1/2 absolute bg-utama blur-[150px] rounded-full w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+      />
 
-          {/* Grid Texture */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] opacity-[0.02] bg-size-[24px_24px] pointer-events-none"></div>
+      <div className="z-10 relative mx-auto px-6 md:pr-8 md:pl-28 w-full max-w-5xl">
+        {/* The "Monolith" Card - 3D Floating */}
+        <motion.div
+          ref={cardRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="relative bg-slate-900/30 shadow-2xl backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden"
+          style={{ transformStyle: "preserve-3d" }}>
+          {/* Noise Texture Overlay */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] opacity-30 pointer-events-none"></div>
 
-          {/* Header Section - Consistent with other sections */}
-          <div className="z-10 relative flex md:flex-row flex-col justify-between items-start md:items-end gap-4 md:gap-6 mb-6 md:mb-8 w-full">
-            <div className="w-full md:text-left text-center">
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                className="flex justify-center md:justify-start items-center gap-2 mb-1">
-                <div className="bg-utama/10 p-1 rounded-full">
-                  <Sparkles size={12} className="text-utama" />
-                </div>
-                <h1 className="font-bold text-[10px] text-utama md:text-xs uppercase tracking-[3px] md:tracking-[5px]">
-                  Chapter 6
-                </h1>
-              </motion.div>
-              <h2 className="bg-clip-text bg-linear-to-r from-slate-900 to-slate-700 font-black text-transparent text-2xl md:text-4xl tracking-tight">
-                Get in Touch
-              </h2>
-            </div>
-
-            {/* Decorative Line */}
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: "100%" }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="hidden md:block bg-linear-to-l from-transparent via-slate-200 to-transparent h-px"
-            />
-          </div>
-
-          {/* Content Area - Split Layout */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            className="z-10 relative flex-1 gap-8 md:gap-16 grid md:grid-cols-5 min-h-0">
-            {/* Left Column: Info & Legacy Vibe */}
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col justify-between space-y-6 col-span-2 h-full">
+          <div ref={contentRef} className="gap-0 grid md:grid-cols-5">
+            {/* === LEFT SIDE: INFO (Legendary Typography) === */}
+            <div className="flex flex-col justify-between col-span-2 p-8 md:p-12 border-white/5 md:border-r border-b md:border-b-0">
               <div>
-                <h3 className="mb-4 font-bold text-slate-800 text-xl md:text-2xl leading-tight">
-                  Let's build something{" "}
-                  <span className="text-utama">legendary</span> together.
-                </h3>
-                <p className="text-slate-500 text-sm md:text-base leading-relaxed">
-                  Punya pertanyaan atau ide proyek? Saya selalu terbuka untuk
-                  diskusi dan kolaborasi baru. Jangan ragu untuk menghubungi.
+                <span className="block mb-4 font-bold text-[10px] text-utama uppercase tracking-[4px]">
+                  Connect
+                </span>
+                <h2 className="mb-4 font-black text-white text-4xl md:text-5xl leading-tight">
+                  Let's Create
+                  <br />
+                  <span className="bg-clip-text bg-gradient-to-r from-slate-400 to-slate-500 text-transparent">
+                    Impact.
+                  </span>
+                </h2>
+                <p className="mb-8 text-slate-400 text-sm leading-relaxed">
+                  Ready to start your next project? Drop me a message. I'm
+                  currently available for freelance work and collaborations.
                 </p>
               </div>
 
-              {/* Contact Info Cards */}
-              <div className="space-y-3">
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="group flex items-center gap-4 bg-slate-50 hover:bg-utama/5 p-4 border border-slate-100 hover:border-utama/20 rounded-xl transition-all duration-300 cursor-default">
-                  <div className="bg-utama/10 group-hover:bg-utama p-3 rounded-xl text-utama group-hover:text-white transition-colors">
-                    <MapPin size={18} />
+              <div className="hidden md:block space-y-4">
+                <div className="group flex items-center gap-3 text-slate-400 hover:text-white text-sm transition-colors cursor-pointer">
+                  <div className="bg-white/5 group-hover:bg-utama p-2 rounded-lg group-hover:text-white transition-colors">
+                    <Mail size={16} />
                   </div>
-                  <div>
-                    <p className="font-semibold text-slate-700 text-sm">
-                      Location
-                    </p>
-                    <p className="text-slate-400 text-xs">Indonesia</p>
+                  <span>fawwaz1511@student.abudzar.sch.id</span>
+                </div>
+                <div className="group flex items-center gap-3 text-slate-400 hover:text-white text-sm transition-colors cursor-pointer">
+                  <div className="bg-white/5 group-hover:bg-utama p-2 rounded-lg group-hover:text-white transition-colors">
+                    <MapPin size={16} />
                   </div>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="group flex items-center gap-4 bg-slate-50 hover:bg-utama/5 p-4 border border-slate-100 hover:border-utama/20 rounded-xl transition-all duration-300 cursor-default">
-                  <div className="bg-utama/10 group-hover:bg-utama p-3 rounded-xl text-utama group-hover:text-white transition-colors">
-                    <Smartphone size={18} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-700 text-sm">
-                      WhatsApp
-                    </p>
-                    <p className="text-slate-400 text-xs">+62 000 0000 0000</p>
-                  </div>
-                </motion.div>
+                  <span>Indonesia</span>
+                </div>
               </div>
+            </div>
 
-              {/* Decorative Large Text */}
-              <div className="max-md:hidden opacity-5 -mb-10 -ml-4 font-black text-[120px] text-slate-900 leading-none tracking-tighter select-none">
-                MAIL.
-              </div>
-            </motion.div>
+            {/* === RIGHT SIDE: THE FORM === */}
+            <div className="col-span-3 p-8 md:p-12">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Input: Name */}
+                <div className="group relative">
+                  <User
+                    className="top-4 left-4 absolute text-slate-600 group-focus-within:text-utama transition-colors"
+                    size={18}
+                  />
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="Your Name"
+                    onChange={handleChange}
+                    className="bg-slate-800/30 py-4 pr-4 pl-12 border border-white/10 focus:border-utama/50 rounded-xl outline-none focus:ring-1 focus:ring-utama/20 w-full text-white placeholder:text-slate-600 text-sm transition-all"
+                  />
+                </div>
 
-            {/* Right Column: The Form (Glassmorphism Card) */}
-            <motion.div
-              variants={itemVariants}
-              className="relative col-span-3 h-full">
-              {/* Inner Card Dark Mode Style */}
-              <div className="relative flex flex-col bg-slate-900 shadow-inner p-6 md:p-8 border border-slate-800 rounded-2xl md:rounded-3xl w-full h-full overflow-hidden">
-                {/* Ambient Glow inside Form */}
-                <motion.div
-                  variants={glowVariants}
-                  initial="initial"
-                  animate="animate"
-                  className="top-0 right-0 absolute bg-utama/20 blur-[80px] rounded-full w-48 h-48 pointer-events-none"
-                />
+                {/* Input: Email */}
+                <div className="group relative">
+                  <Mail
+                    className="top-4 left-4 absolute text-slate-600 group-focus-within:text-utama transition-colors"
+                    size={18}
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="Your Email"
+                    onChange={handleChange}
+                    className="bg-slate-800/30 py-4 pr-4 pl-12 border border-white/10 focus:border-utama/50 rounded-xl outline-none focus:ring-1 focus:ring-utama/20 w-full text-white placeholder:text-slate-600 text-sm transition-all"
+                  />
+                </div>
 
-                <form
-                  onSubmit={submit}
-                  className="z-10 relative flex flex-col justify-between gap-5 w-full h-full">
-                  {/* Input Grid */}
-                  <div className="gap-5 grid md:grid-cols-2">
-                    {/* First Name Input */}
-                    <div className="group relative">
-                      <User
-                        className="top-3.5 left-4 absolute text-slate-500 group-focus-within:text-utama transition-colors"
-                        size={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Nama Depan"
-                        required
-                        onChange={(e) => setNDepan(e.target.value)}
-                        className="peer bg-slate-800/50 py-3 pr-4 pl-11 border border-slate-700 focus:border-utama rounded-xl outline-none focus:ring-1 focus:ring-utama w-full text-white placeholder:text-slate-500 text-sm transition-all"
-                      />
-                    </div>
+                {/* Textarea: Message */}
+                <div className="group relative">
+                  <MessageSquareText
+                    className="top-4 left-4 absolute text-slate-600 group-focus-within:text-utama transition-colors"
+                    size={18}
+                  />
+                  <textarea
+                    name="message"
+                    required
+                    placeholder="Tell me about your project..."
+                    onChange={handleChange}
+                    rows={4}
+                    className="bg-slate-800/30 py-4 pr-4 pl-12 border border-white/10 focus:border-utama/50 rounded-xl outline-none focus:ring-1 focus:ring-utama/20 w-full text-white placeholder:text-slate-600 text-sm transition-all resize-none"></textarea>
+                </div>
 
-                    {/* Last Name Input */}
-                    <div className="group relative">
-                      <User
-                        className="top-3.5 left-4 absolute text-slate-500 group-focus-within:text-utama transition-colors"
-                        size={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Nama Belakang"
-                        required
-                        onChange={(e) => setNBelakang(e.target.value)}
-                        className="peer bg-slate-800/50 py-3 pr-4 pl-11 border border-slate-700 focus:border-utama rounded-xl outline-none focus:ring-1 focus:ring-utama w-full text-white placeholder:text-slate-500 text-sm transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Message Textarea */}
-                  <div className="group relative flex-1 min-h-[120px]">
-                    <MessageSquareText
-                      className="top-3.5 left-4 absolute text-slate-500 group-focus-within:text-utama transition-colors"
-                      size={16}
-                    />
-                    <textarea
-                      required
-                      placeholder="Tulis pesan Anda di sini..."
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="bg-slate-800/50 py-3 pr-4 pl-11 border border-slate-700 focus:border-utama rounded-xl outline-none focus:ring-1 focus:ring-utama w-full h-full text-white placeholder:text-slate-500 text-sm transition-all resize-none"></textarea>
-                  </div>
-
-                  {/* Submit Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="group relative flex justify-center items-center gap-2 bg-utama shadow-lg shadow-utama/20 py-4 rounded-xl overflow-hidden font-bold text-white transition-all duration-300">
-                    {/* Button Shine Effect */}
-                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent skew-x-12 transition-transform -translate-x-full group-hover:translate-x-full duration-700" />
-
-                    <span className="z-10 text-sm md:text-base tracking-wide">
-                      KIRIM PESAN
-                    </span>
-                    <ArrowUpRight
+                {/* Submit Button */}
+                <motion.button
+                  type="submit"
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.3)",
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative flex justify-center items-center gap-2 bg-utama shadow-lg shadow-utama/10 px-8 py-4 rounded-xl w-full overflow-hidden font-bold text-white transition-all duration-300">
+                  <span className="z-10 relative flex items-center gap-2">
+                    Send Message
+                    <Send
                       size={18}
-                      className="z-10 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
+                      className="group-hover:rotate-12 transition-transform"
                     />
-                  </motion.button>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </motion.div>
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full duration-700" />
+                </motion.button>
+              </form>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Footer Tagline */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-8 text-slate-700 text-xs text-center uppercase tracking-widest">
+          Designed & Built with Passion • 2024
+        </motion.p>
+      </div>
     </section>
   );
 }

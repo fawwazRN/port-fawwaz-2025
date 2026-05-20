@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -6,196 +7,309 @@ import {
   Code,
   Laptop,
   Award,
-  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Timeline() {
+  const sectionRef = useRef(null);
+  const lineRef = useRef(null);
+  const cardRefs = useRef([]);
+  const titleRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(null);
+  const [activeTooltip, setActiveTooltip] = useState(null);
+
+  // ================= DATA =================
   const timelineData = [
     {
       year: "2021",
       title: "Awal Minat IT",
       desc: "Mulai tertarik mendalami dunia teknologi informasi dan belajar pemrograman dasar secara mandiri.",
       icon: Laptop,
-      tags: ["Self-Taught", "Basics"],
+      color: "#10b981", // Emerald
     },
     {
       year: "2022",
       title: "Pendidikan Pesantren",
-      desc: "Bergabung dengan Abudzar Tahfizh Plus IT. Menyeimbangkan hafalan Al-Qur'an dan fundamental IT.",
+      desc: "Bergabung dengan Abudzar Tahfizh Plus IT. Menyeimbangkan hafalan Al-Qur'an dan fundamental IT bersama Ustadz Firman Azhary.",
       icon: GraduationCap,
-      tags: ["Tahfizh", "IT Foundation"],
+      color: "#3b82f6", // Blue
     },
     {
       year: "2023",
       title: "Proyek Pertama",
       desc: "Mengerjakan proyek kolaboratif seperti Indotravel dan Webkita sebagai implementasi skill.",
       icon: Code,
-      tags: ["Web Dev", "Collaboration"],
+      color: "#8b5cf6", // Purple
     },
     {
       year: "2024",
       title: "Pengembangan Diri",
       desc: "Membangun Portfolio pribadi, Eduverse, dan aktif dalam berbagai proyek IT kelas 10.",
       icon: Rocket,
-      tags: ["Fullstack", "Portfolio"],
+      color: "#f59e0b", // Amber
     },
   ];
 
-  // ================= ANIMATION VARIANTS =================
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3,
-        delayChildren: 0.2,
-      },
+  const highlightData = [
+    {
+      name: "Abudzar Tahfizh Plus IT",
+      link: "#",
+      img: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=600",
+      desc: "Pondok Pesantren unggulan.",
     },
-  };
-
-  const cardVariants = {
-    hidden: (index) => ({
-      opacity: 0,
-      x: index % 2 === 0 ? -50 : 50,
-      filter: "blur(10px)",
-    }),
-    visible: {
-      opacity: 1,
-      x: 0,
-      filter: "blur(0px)",
-      transition: {
-        type: "spring",
-        stiffness: 70,
-        damping: 15,
-      },
+    {
+      name: "Ustadz Firman Azhary",
+      link: "#",
+      img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=600",
+      desc: "Mentor IT & Tahfizh.",
     },
-  };
-
-  const lineVariants = {
-    hidden: { scaleY: 0 },
-    visible: {
-      scaleY: 1,
-      transition: { duration: 1.5, ease: "easeInOut" },
+    {
+      name: "Indotravel",
+      link: "#",
+      img: "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?q=80&w=600",
+      desc: "Platform wisata Indonesia.",
     },
+    {
+      name: "Webkita",
+      link: "#",
+      img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600",
+      desc: "Komunitas developer.",
+    },
+    {
+      name: "Eduverse",
+      link: "#",
+      img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=600",
+      desc: "Platform edukasi meta.",
+    },
+  ];
+
+  // ================= GSAP ANIMATIONS =================
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // 1. Header
+      gsap.from(titleRef.current, {
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+        scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
+      });
+
+      // 2. Line
+      gsap.fromTo(
+        lineRef.current,
+        { scaleY: 0 },
+        {
+          scaleY: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 70%",
+            end: "bottom 50%",
+            scrub: 0.5,
+          },
+        },
+      );
+
+      // 3. Cards
+      cardRefs.current.forEach((card, index) => {
+        const isLeft = index % 2 === 0;
+        gsap.fromTo(
+          card,
+          { opacity: 0, scale: 0.8, y: 100, rotateY: isLeft ? 45 : -45 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            rotateY: 0,
+            duration: 1.2,
+            ease: "back.out(1.2)",
+            scrollTrigger: {
+              trigger: card,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+              onEnter: () => setActiveIndex(index),
+            },
+          },
+        );
+      });
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
+  // Helper: Render Text
+  const renderText = (text) => {
+    const parts = text.split(
+      /(\bAbudzar Tahfizh Plus IT\b|\bIndotravel\b|\bWebkita\b|\bEduverse\b|\bUstadz Firman Azhary\b)/g,
+    );
+    return parts.map((part, i) => {
+      const found = highlightData.find((h) => h.name === part);
+      if (found) {
+        return (
+          <span
+            key={i}
+            className="group/tooltip inline-block relative font-semibold text-utama hover:text-white transition-colors cursor-pointer"
+            onMouseEnter={() => setActiveTooltip(found.name)}
+            onMouseLeave={() => setActiveTooltip(null)}>
+            {part}
+            <span className="bottom-0 left-0 absolute bg-utama/50 w-full h-0.5 scale-x-0 group-hover/tooltip:scale-x-100 origin-left transition-transform"></span>
+
+            {/* TOOLTIP */}
+            {activeTooltip === found.name && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="top-full left-1/2 z-[9999] absolute mt-3 w-64 -translate-x-1/2">
+                <div className="bg-slate-900 shadow-2xl backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
+                  <img src={found.img} className="w-full h-28 object-cover" />
+                  <div className="p-3">
+                    <h4 className="mb-1 font-bold text-white text-sm">
+                      {found.name}
+                    </h4>
+                    <p className="mb-2 text-[10px] text-slate-400">
+                      {found.desc}
+                    </p>
+                    <a
+                      href={found.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex justify-center items-center gap-1 bg-utama/20 hover:bg-utama py-1.5 rounded w-full text-[10px] text-white transition-colors">
+                      Visit <ExternalLink size={10} />
+                    </a>
+                  </div>
+                </div>
+                <div className="-top-2 left-1/2 absolute border-transparent border-r-8 border-b-8 border-b-slate-900 border-l-8 w-0 h-0 -translate-x-1/2"></div>
+              </motion.div>
+            )}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
     <section
-      className="top-0 left-0 relative max-md:sticky flex justify-end items-center bg-utama max-md:bg-transparent w-full h-screen overflow-hidden font-jakarta"
-      id="timeline">
-      <motion.div
-        className="top-0 left-0 flex justify-center items-center max-md:p-0 px-12.5 py-6.25 w-4/5 max-md:w-full h-full"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={containerVariants}>
-        <div className="relative space-y-10 bg-white/95 shadow-2xl backdrop-blur-sm p-10 max-md:p-6 border border-slate-200/50 rounded-3xl w-full h-full overflow-y-auto">
-          {/* Background Texture Overlay (Matching AboutMe) */}
-          <div className="absolute inset-0 bg-[radial-gradient(theme(colors.slate.900)_1px,transparent_1px)] opacity-[0.02] pointer-events-none [background-size:20px_20px]"></div>
+      ref={sectionRef}
+      id="timeline"
+      className="relative bg-slate-950 py-32 w-full overflow-hidden font-jakarta">
+      {/* Ambient Light */}
+      {timelineData.map((item, i) => (
+        <div
+          key={i}
+          className="absolute inset-0 opacity-0 transition-opacity duration-1000 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at 50% 30%, ${item.color}20, transparent 60%)`,
+            opacity: activeIndex === i ? 1 : 0,
+          }}
+        />
+      ))}
 
-          {/* Header Section */}
-          <motion.div
-            className="z-10 relative flex justify-center items-center gap-4 w-full"
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}>
-            <span className="bg-linear-to-r from-transparent to-slate-200 w-full h-px"></span>
-            <div className="flex-none px-4 min-w-fit text-center">
-              <motion.span
-                initial={{ opacity: 0, y: -10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block bg-utama/10 mb-1 px-3 py-1 rounded-full font-bold text-utama text-xs uppercase tracking-[4px]">
-                Chapter 4
-              </motion.span>
-              <h2 className="font-bold text-slate-950 max-md:text-3xl text-4xl tracking-tight">
-                My Journey
-              </h2>
-            </div>
-            <span className="bg-linear-to-l from-transparent to-slate-200 w-full h-px"></span>
-          </motion.div>
+      {/* PENTING: lg:pl-80 biar gak ketutup sidebar expanded */}
+      <div className="z-10 relative mx-auto px-6 md:pr-8 md:pl-28 lg:pl-80 max-w-6xl">
+        {/* Header */}
+        <div ref={titleRef} className="flex items-center gap-4 mb-20">
+          <div className="bg-utama shadow-lg shadow-utama/30 p-3 rounded-xl">
+            <Calendar size={24} className="text-white" />
+          </div>
+          <div>
+            <h2 className="font-black text-white text-3xl md:text-4xl tracking-tight">
+              My Journey
+            </h2>
+            <p className="mt-1 text-slate-500 text-sm">Timeline of growth</p>
+          </div>
+        </div>
 
-          {/* Timeline Body */}
-          <div className="relative px-4 md:px-10 py-8">
-            {/* Central Vertical Line */}
-            <motion.div
-              className="max-md:hidden top-0 bottom-0 left-1/2 absolute bg-linear-to-b from-utama via-slate-200 to-transparent w-0.5 origin-top -translate-x-1/2"
-              variants={lineVariants}
+        {/* Grid */}
+        <div className="relative min-h-[150vh] md:min-h-[100vh]">
+          {/* Line */}
+          <div className="top-0 bottom-0 left-6 md:left-1/2 absolute bg-slate-800 rounded-full w-1 overflow-hidden md:-translate-x-1/2 transform">
+            <div
+              ref={lineRef}
+              className="bg-gradient-to-b from-utama via-teal-400 to-purple-500 w-full h-full origin-top"
             />
+          </div>
 
-            <div className="space-y-16">
-              {timelineData.map((item, index) => (
-                <motion.div
+          {/* Cards */}
+          <div className="space-y-32 md:space-y-40">
+            {timelineData.map((item, index) => {
+              const IconComponent = item.icon;
+              const isLeft = index % 2 === 0;
+
+              return (
+                <div
                   key={index}
-                  custom={index}
-                  variants={cardVariants}
-                  className={`relative flex items-center w-full ${
-                    index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                  } flex-col`}>
-                  {/* Dot on Line */}
-                  <div className="max-md:hidden top-1/2 left-1/2 z-30 absolute bg-white shadow-[0_0_15px_rgba(var(--utama-rgb),0.4)] border-4 border-utama rounded-full w-5 h-5 -translate-x-1/2 -translate-y-1/2"></div>
+                  ref={(el) => (cardRefs.current[index] = el)}
+                  // PENTING: class 'group' dipindah sini biar bisa kontrol anak2nya
+                  className={`relative w-full md:w-1/2 ${isLeft ? "md:pr-12" : "md:pl-12 md:ml-auto"} group z-20`}
+                  style={{ perspective: "1000px" }}>
+                  {/* Icon/Logo (Hidden by default, show on hover) */}
+                  <div
+                    className="top-0 left-6 md:left-0 z-30 absolute flex justify-center items-center opacity-0 group-hover:opacity-100 rounded-full w-12 h-12 transition-all md:-translate-x-1/2 duration-500 transform"
+                    style={{
+                      backgroundColor:
+                        activeIndex === index ? item.color : "#1e293b",
+                      boxShadow:
+                        activeIndex === index
+                          ? `0 0 30px ${item.color}`
+                          : "none",
+                    }}>
+                    <IconComponent size={20} className="text-white" />
+                  </div>
 
                   {/* Card Content */}
                   <div
-                    className={`w-full md:w-1/2 ${index % 2 === 0 ? "md:pr-16" : "md:pl-16"} max-md:pl-12`}>
-                    <motion.div
-                      whileHover={{ y: -5, scale: 1.02 }}
-                      className="relative bg-slate-50 hover:bg-white shadow-sm hover:shadow-xl p-6 border border-slate-100 hover:border-utama/30 rounded-2xl transition-all duration-300">
-                      {/* Mobile Icon */}
-                      <div className="md:hidden top-0 left-0 absolute flex justify-center items-center bg-utama shadow-lg border-4 border-white rounded-full w-10 h-10 text-white -translate-x-1/2">
-                        <item.icon size={18} />
-                      </div>
+                    className="group/card relative bg-slate-900/80 backdrop-blur-md ml-20 md:ml-0 p-8 border border-white/10 hover:border-utama/30 rounded-3xl overflow-visible transition-all duration-500"
+                    style={{
+                      boxShadow:
+                        activeIndex === index
+                          ? `0 30px 60px -10px ${item.color}20`
+                          : "none",
+                    }}>
+                    {/* Year (Hidden by default, show on hover) */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="opacity-0 group-hover:opacity-100 font-black text-white/10 group-hover:text-white/20 text-4xl transition-colors duration-300">
+                        {item.year}
+                      </span>
+                    </div>
 
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 bg-utama/10 px-3 py-1 rounded-full text-utama">
-                          <Calendar size={14} />
-                          <span className="font-bold text-xs">{item.year}</span>
-                        </div>
-                        {item.tags.map((tag, tIdx) => (
-                          <span
-                            key={tIdx}
-                            className="font-medium text-[10px] text-slate-400 uppercase tracking-wider">
-                            • {tag}
-                          </span>
-                        ))}
-                      </div>
+                    <h3 className="mb-4 font-bold text-white text-2xl">
+                      {item.title}
+                    </h3>
 
-                      <h3 className="mb-2 font-bold text-slate-950 text-xl tracking-tight">
-                        {item.title}
-                      </h3>
-                      <p className="text-slate-600 text-sm leading-relaxed">
-                        {item.desc}
-                      </p>
+                    <p className="z-50 relative text-slate-400 text-sm leading-relaxed">
+                      {renderText(item.desc)}
+                    </p>
 
-                      {/* Icon for Desktop (Floating Side) */}
-                      <div
-                        className={`max-md:hidden absolute top-6 ${index % 2 === 0 ? "-right-12" : "-left-12"} text-utama opacity-20 group-hover:opacity-100 transition-opacity`}>
-                        <item.icon size={32} />
-                      </div>
-                    </motion.div>
+                    <div className="right-4 bottom-4 absolute opacity-10 group-hover/card:opacity-30 transition-opacity pointer-events-none">
+                      <IconComponent size={60} className="text-white" />
+                    </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* Bottom Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="pt-12 text-center">
-            <div className="inline-flex items-center gap-3 bg-slate-950 shadow-2xl px-6 py-3 border border-white/10 rounded-full">
-              <div className="bg-utama p-1.5 rounded-full">
-                <Award size={16} className="text-white animate-pulse" />
-              </div>
-              <span className="font-bold text-white text-sm tracking-wide">
-                The Journey Continues...
-              </span>
-              <ChevronRight size={16} className="text-utama" />
-            </div>
-          </motion.div>
         </div>
-      </motion.div>
+
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="z-10 relative flex justify-center mt-40">
+          <div className="flex items-center gap-3 bg-slate-900 px-6 py-3 border border-white/10 rounded-full">
+            <Award size={16} className="text-utama animate-pulse" />
+            <span className="font-semibold text-white text-sm">
+              The Journey Continues...
+            </span>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }
