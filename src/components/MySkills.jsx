@@ -128,7 +128,7 @@ export default function MySkills() {
       className="relative bg-slate-950 py-24 md:py-32 w-full min-h-screen overflow-hidden font-jakarta">
       {/* Ambient Background */}
       <div className="z-0 absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[40px_40px]"></div>
         {/* Moving Glow */}
         <motion.div
           animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
@@ -145,7 +145,7 @@ export default function MySkills() {
           <h2 className="font-bold text-white text-xl md:text-2xl tracking-tight">
             Tech Stack & Capabilities
           </h2>
-          <div className="flex-1 bg-gradient-to-r from-utama/50 to-transparent h-px"></div>
+          <div className="flex-1 bg-linear-to-r from-utama/50 to-transparent h-px"></div>
         </div>
 
         {/* Grid Layout: 2 Kolom di Tablet, 4 Kolom di Desktop */}
@@ -170,7 +170,7 @@ export default function MySkills() {
                   }}></div>
 
                 {/* --- CONTENT --- */}
-                <div className="z-20 relative flex flex-col justify-between h-full min-h-[240px]">
+                <div className="z-20 relative flex flex-col justify-between h-full min-h-60">
                   {/* Top: Icon & Percentage */}
                   <div className="flex justify-between items-start mb-4">
                     <div
@@ -201,14 +201,14 @@ export default function MySkills() {
                       <div
                         ref={(el) => (progressRefs.current[index] = el)}
                         className="relative bg-utama shadow-[0_0_10px_rgba(16,185,129,0.5)] rounded-full w-0 h-full">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Decorative Background Gradient */}
-                <div className="z-0 absolute inset-0 bg-gradient-to-br from-utama/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="z-0 absolute inset-0 bg-linear-to-br from-utama/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
             );
           })}

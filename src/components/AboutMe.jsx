@@ -119,7 +119,7 @@ export default function AboutMe() {
           <h2 className="font-bold text-white text-xl md:text-2xl tracking-tight">
             About Me
           </h2>
-          <div className="flex-1 bg-gradient-to-r from-slate-700 to-transparent h-px"></div>
+          <div className="flex-1 bg-linear-to-r from-slate-700 to-transparent h-px"></div>
         </div>
 
         <div className="items-center gap-12 md:gap-16 grid md:grid-cols-5">
@@ -135,7 +135,7 @@ export default function AboutMe() {
                   alt="Fawwaz"
                   className="grayscale group-hover:grayscale-0 w-full h-full object-cover transition-all duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-transparent"></div>
               </div>
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
@@ -186,7 +186,7 @@ export default function AboutMe() {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 5 }}
-                        className="top-full left-0 z-[999] absolute pt-2" // pt-2 jembatan biar gk ilang
+                        className="top-full left-0 z-999 absolute pt-2" // pt-2 jembatan biar gk ilang
                       >
                         <div className="bg-slate-900 shadow-2xl backdrop-blur-md border border-white/10 rounded-xl w-72 overflow-hidden">
                           <img

@@ -164,7 +164,7 @@ export default function Timeline() {
                 initial={{ opacity: 0, y: 10, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="top-full left-1/2 z-[9999] absolute mt-3 w-64 -translate-x-1/2">
+                className="top-full left-1/2 z-9999 absolute mt-3 w-64 -translate-x-1/2">
                 <div className="bg-slate-900 shadow-2xl backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
                   <img src={found.img} className="w-full h-28 object-cover" />
                   <div className="p-3">
@@ -226,12 +226,12 @@ export default function Timeline() {
         </div>
 
         {/* Grid */}
-        <div className="relative min-h-[150vh] md:min-h-[100vh]">
+        <div className="relative min-h-[150vh] md:min-h-screen">
           {/* Line */}
           <div className="top-0 bottom-0 left-6 md:left-1/2 absolute bg-slate-800 rounded-full w-1 overflow-hidden md:-translate-x-1/2 transform">
             <div
               ref={lineRef}
-              className="bg-gradient-to-b from-utama via-teal-400 to-purple-500 w-full h-full origin-top"
+              className="bg-linear-to-b from-utama via-teal-400 to-purple-500 w-full h-full origin-top"
             />
           </div>
 

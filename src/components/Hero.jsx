@@ -85,8 +85,8 @@ export default function Hero() {
           className="w-full h-full object-cover"
         />
         {/* Gradient Utama (60% Rule) */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-950/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/90" />
+        <div className="absolute inset-0 bg-linear-to-tr from-slate-950 via-slate-950/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-slate-950/90" />
 
         {/* Noise Overlay */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIvPjwvc3ZnPg==')] opacity-[0.15]" />
@@ -113,7 +113,7 @@ export default function Hero() {
           <h1 className="font-bold text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight tracking-tight">
             {/* Kita pecah jadi kata per kata buat animasi GSAP */}
             <span className="inline-block mr-3 hero-word">Creative</span>
-            <span className="inline-block bg-clip-text bg-gradient-to-r from-utama to-teal-400 mr-3 text-transparent hero-word">
+            <span className="inline-block bg-clip-text bg-linear-to-r from-utama to-teal-400 mr-3 text-transparent hero-word">
               Developer
             </span>
             <br />

@@ -53,7 +53,7 @@ export default function MyProject() {
   useEffect(() => {
     if (!showArchive) {
       const ctx = gsap.context(() => {
-        gsap.utils.toArray(".featured-project").forEach((project, i) => {
+        gsap.utils.toArray(".featured-project").forEach((project) => {
           gsap.from(project, {
             opacity: 0,
             y: 80,
@@ -132,11 +132,11 @@ export default function MyProject() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="z-[999] fixed inset-0 flex flex-col bg-slate-950 overflow-hidden">
+            className="z-999 fixed inset-0 flex flex-col bg-slate-950 overflow-hidden">
             {/* Container dengan Padding (Responsif) */}
             <div className="flex flex-col mx-auto px-6 md:px-8 py-8 w-full max-w-6xl h-full overflow-hidden">
               {/* Archive Header (Fixed di atas) */}
-              <div className="flex flex-shrink-0 justify-between items-center mb-8 pb-4 border-white/10 border-b">
+              <div className="flex justify-between items-center mb-8 pb-4 border-white/10 border-b shrink-0">
                 <div>
                   <h3 className="font-bold text-white text-xl md:text-2xl">
                     All Projects
@@ -155,7 +155,7 @@ export default function MyProject() {
               </div>
 
               {/* Search Bar */}
-              <div className="group relative flex-shrink-0 mb-6">
+              <div className="group relative mb-6 shrink-0">
                 <div className="absolute inset-0 bg-utama/20 opacity-0 group-focus-within:opacity-100 blur-xl rounded-full transition-opacity"></div>
                 <div className="relative flex items-center bg-slate-900 px-6 py-3 border border-white/10 group-focus-within:border-utama/50 rounded-full transition-colors">
                   <Search size={18} className="mr-3 text-slate-500" />
@@ -287,7 +287,7 @@ function FeaturedItem({ project, index }) {
         className="group relative order-1 md:order-2 md:col-span-7"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}>
-        <div className="relative shadow-2xl border border-white/10 rounded-2xl w-full md:h-[400px] aspect-[4/3] md:aspect-auto overflow-hidden">
+        <div className="relative shadow-2xl border border-white/10 rounded-2xl w-full md:h-[400px] aspect-4/3 md:aspect-auto overflow-hidden">
           <img
             src={project.img}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"

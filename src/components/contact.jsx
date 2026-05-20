@@ -21,7 +21,6 @@ export default function Contact() {
     email: "",
     message: "",
   });
-  const [isHovered, setIsHovered] = useState(false);
   const sectionRef = useRef(null);
   const cardRef = useRef(null);
   const contentRef = useRef(null);
@@ -141,7 +140,7 @@ export default function Contact() {
                 <h2 className="mb-4 font-black text-white text-4xl md:text-5xl leading-tight">
                   Let's Create
                   <br />
-                  <span className="bg-clip-text bg-gradient-to-r from-slate-400 to-slate-500 text-transparent">
+                  <span className="bg-clip-text bg-linear-to-r from-slate-400 to-slate-500 text-transparent">
                     Impact.
                   </span>
                 </h2>
@@ -233,7 +232,7 @@ export default function Contact() {
                       className="group-hover:rotate-12 transition-transform"
                     />
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full duration-700" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full duration-700" />
                 </motion.button>
               </form>
             </div>
