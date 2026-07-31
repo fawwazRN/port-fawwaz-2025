@@ -147,7 +147,7 @@ export default function Achievement() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="absolute inset-0 bg-yellow-500 opacity-30 blur-xl animate-pulse"></div>
-              <div className="relative bg-gradient-to-tr from-yellow-400 to-amber-500 shadow-lg p-3 rounded-xl">
+              <div className="relative bg-linear-to-tr from-yellow-400 to-amber-500 shadow-lg p-3 rounded-xl">
                 <Trophy size={24} className="text-slate-950" />
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function Achievement() {
                         className="opacity-80 group-hover:opacity-100 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       {/* Gradient Overlay - Heavy on text readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent opacity-90 group-hover:opacity-70 transition-opacity"></div>
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent opacity-90 group-hover:opacity-70 transition-opacity"></div>
                     </div>
 
                     {/* Content Layer */}
@@ -259,7 +259,7 @@ export default function Achievement() {
 
                     {/* Shine Effect on Hover */}
                     <div className="z-20 absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full duration-1000"></div>
+                      <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/10 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full duration-1000"></div>
                     </div>
                   </div>
                 </motion.div>
