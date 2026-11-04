@@ -1,191 +1,230 @@
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { ChevronRight, ArrowDown, CircleDot, Sparkles } from "lucide-react";
-import gsap from "gsap";
-import indo from "../assets/indo-conv.webm";
+import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon";
+import { PROFILE, ROLES } from "../data";
+import { FINE, REDUCED, clamp, lerp, onFrame, scrollToId } from "../lib/motion";
+import { useScene } from "../lib/hooks";
+
+const Chars = ({ text, start = 0 }) =>
+  text.split("").map((c, i) => (
+    <span key={i} className="ch" style={{ "--i": start + i }} aria-hidden="true">
+      {c === " " ? " " : c}
+    </span>
+  ));
+
+function Clock() {
+  const [t, setT] = useState("");
+  useEffect(() => {
+    const f = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const tick = () => setT(f.format(new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className="mono">{t} WIB</span>;
+}
+
+function Rotator() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (REDUCED) return;
+    const id = setInterval(() => setI((v) => (v + 1) % ROLES.length), 2400);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="rot" aria-label={ROLES.join(", ")}>
+      {ROLES.map((r, j) => (
+        <span
+          key={r}
+          aria-hidden="true"
+          className={j === i ? "on" : j === (i - 1 + ROLES.length) % ROLES.length ? "off" : ""}>
+          {r}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function Hero() {
-  const textRef = useRef(null);
-  const containerRef = useRef(null);
+  const root = useRef(null);
+  const inner = useRef(null);
+  const cv = useRef(null);
+  const title = useRef(null);
 
+  // parallax keluar saat scroll
+  useScene(root, (p, r) => {
+    const o = clamp(-r.top / r.height, 0, 1);
+    if (inner.current) {
+      inner.current.style.transform = `translate3d(0,${o * 90}px,0)`;
+      inner.current.style.opacity = 1 - o * 1.15;
+    }
+  });
+
+  // canvas titik interaktif
   useEffect(() => {
-    // ===== GSAP ANIMATION ENGINE =====
-    const ctx = gsap.context(() => {
-      // 1. Text Reveal (Stagger Effect)
-      // Kita ambil semua kata di dalam class .hero-word
-      gsap.fromTo(
-        ".hero-word",
-        { y: 120, opacity: 0, rotateX: -80 },
-        {
-          y: 0,
-          opacity: 1,
-          rotateX: 0,
-          stagger: 0.1, // Jeda antar kata
-          duration: 1.2,
-          ease: "power4.out",
-          delay: 0.5,
-        },
-      );
-
-      // 2. Floating Elements (Parallax kecil)
-      gsap.to(".floating-shape", {
-        y: -20,
-        duration: 2,
-        ease: "sine.inOut",
-        repeat: -1, // Loop infinite
-        yoyo: true, // Balik lagi
-        stagger: 0.5, // Gerak beda waktu
-      });
-
-      // 3. Intro Line & Badge
-      gsap.fromTo(
-        ".intro-item",
-        { opacity: 0, x: -30 },
-        { opacity: 1, x: 0, stagger: 0.2, duration: 0.8, delay: 0.3 },
-      );
-    }, containerRef);
-
-    return () => ctx.revert();
+    const c = cv.current;
+    const ctx = c.getContext("2d");
+    const GAP = 36;
+    let w = 0, h = 0, dpr = 1, cols = 0, rows = 0, visible = true;
+    const m = { x: -999, y: -999, tx: -999, ty: -999 };
+    let col = { fg: "243,238,229", acc: "255,91,46" };
+    const readColors = () => {
+      const s = getComputedStyle(document.documentElement);
+      col = { fg: s.getPropertyValue("--fg-rgb").trim(), acc: s.getPropertyValue("--acc-rgb").trim() };
+    };
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = c.getBoundingClientRect();
+      w = r.width;
+      h = r.height;
+      c.width = w * dpr;
+      c.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cols = Math.ceil(w / GAP) + 1;
+      rows = Math.ceil(h / GAP) + 1;
+    };
+    const move = (e) => {
+      const r = c.getBoundingClientRect();
+      m.tx = e.clientX - r.left;
+      m.ty = e.clientY - r.top;
+    };
+    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
+    io.observe(c);
+    readColors();
+    resize();
+    window.addEventListener("resize", resize);
+    window.addEventListener("themechange", readColors);
+    window.addEventListener("pointermove", move, { passive: true });
+    const off = onFrame((t) => {
+      if (!visible) return;
+      m.x = lerp(m.x, m.tx, 0.14);
+      m.y = lerp(m.y, m.ty, 0.14);
+      ctx.clearRect(0, 0, w, h);
+      const R = 190;
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          let x = i * GAP + 6;
+          let y = j * GAP + 6;
+          const dx = x - m.x;
+          const dy = y - m.y;
+          const d = Math.hypot(dx, dy);
+          const f = d < R ? 1 - d / R : 0;
+          const wave = REDUCED ? 0 : Math.sin(t / 1400 + i * 0.45 + j * 0.3) * 0.5 + 0.5;
+          if (f > 0) {
+            const push = f * f * 26;
+            x += (dx / (d || 1)) * push;
+            y += (dy / (d || 1)) * push;
+          }
+          const a = 0.1 + wave * 0.1 + f * 0.7;
+          const rad = 1 + wave * 0.5 + f * 2.6;
+          ctx.fillStyle = f > 0.35 ? `rgba(${col.acc},${a})` : `rgba(${col.fg},${a})`;
+          ctx.beginPath();
+          ctx.arc(x, y, rad, 0, 6.2832);
+          ctx.fill();
+        }
+      }
+    });
+    return () => {
+      off();
+      io.disconnect();
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("themechange", readColors);
+      window.removeEventListener("pointermove", move);
+    };
   }, []);
 
-  // Magnetic Effect (Fungsi helper)
-  const magneticHover = (e) => {
-    const btn = e.currentTarget;
-    const rect = btn.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    gsap.to(btn, { x: x * 0.2, y: y * 0.2, duration: 0.3 });
-  };
-
-  const magneticLeave = (e) => {
-    gsap.to(e.currentTarget, {
-      x: 0,
-      y: 0,
-      duration: 0.5,
-      ease: "elastic.out(1, 0.3)",
+  // efek berat huruf mengikuti kursor (variable font)
+  useEffect(() => {
+    const chars = [...title.current.querySelectorAll(".ch")];
+    const cur = chars.map(() => 560);
+    const m = { x: -9999, y: -9999, used: false };
+    const move = (e) => {
+      m.x = e.clientX;
+      m.y = e.clientY;
+      m.used = true;
+    };
+    if (FINE) window.addEventListener("pointermove", move, { passive: true });
+    const off = onFrame((t) => {
+      const box = title.current.getBoundingClientRect();
+      if (box.bottom < 0) return;
+      chars.forEach((el, i) => {
+        let target;
+        if (m.used && FINE) {
+          const r = el.getBoundingClientRect();
+          const d = Math.hypot(m.x - (r.left + r.width / 2), m.y - (r.top + r.height / 2));
+          target = 520 + 280 * clamp(1 - d / 260, 0, 1);
+        } else {
+          target = 560 + (REDUCED ? 0 : 220 * (Math.sin(t / 650 - i * 0.55) * 0.5 + 0.5));
+        }
+        cur[i] = lerp(cur[i], target, 0.12);
+        el.style.fontVariationSettings = `"wght" ${cur[i].toFixed(0)}`;
+      });
     });
-  };
+    return () => {
+      off();
+      window.removeEventListener("pointermove", move);
+    };
+  }, []);
 
   return (
-    <section
-      ref={containerRef}
-      id="hero"
-      className="relative bg-slate-950 w-full h-screen overflow-hidden font-jakarta">
-      {/* --- BACKGROUND ASSETS (Layering) --- */}
-      <div className="z-0 absolute inset-0">
-        <motion.video
-          src={indo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          transition={{ duration: 2 }}
-          className="w-full h-full object-cover"
-        />
-        {/* Gradient Utama (60% Rule) */}
-        <div className="absolute inset-0 bg-linear-to-tr from-slate-950 via-slate-950/80 to-transparent" />
-        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-slate-950/90" />
+    <section id="home" className="hero" ref={root}>
+      <canvas ref={cv} className="hero-canvas" aria-hidden="true" />
+      <div className="hero-glow" aria-hidden="true" />
+      <div className="wrap hero-inner" ref={inner}>
+        <div className="hero-meta" data-in style={{ "--d": 0 }}>
+          <span className="status">
+            <i /> Open for freelance &amp; collab
+          </span>
+          <span className="hero-loc">
+            Indonesia · <Clock />
+          </span>
+        </div>
 
-        {/* Noise Overlay */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIvPjwvc3ZnPg==')] opacity-[0.15]" />
-      </div>
+        <h1 className="hero-title" ref={title} aria-label={PROFILE.name}>
+          <span className="line l1">
+            <Chars text="FAWWAZ" />
+          </span>
+          <span className="line l2">
+            <Chars text="ROMZI NAGIB" start={6} />
+          </span>
+        </h1>
 
-      {/* --- DECORATIVE FLOATING SHAPES (GSAP) --- */}
-      <div className="top-1/4 right-1/4 z-0 absolute bg-utama/10 blur-3xl rounded-full w-72 h-72 floating-shape" />
-      <div className="right-10 bottom-1/4 z-0 absolute bg-teal-500/10 blur-3xl rounded-full w-48 h-48 floating-shape" />
-
-      {/* --- CONTENT SECTION --- */}
-      <div className="z-10 relative flex flex-col justify-center px-8 lg:px-96 md:pr-16 md:pl-80 w-full h-full">
-        {/* Top: Name Badge (Personal Branding) */}
-        <div className="flex items-center gap-3 mb-8 intro-item">
-          <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-4 py-2 border border-white/10 rounded-full">
-            <CircleDot size={10} className="text-green-400 animate-pulse" />
-            <span className="font-medium text-slate-300 text-xs">
-              Fawwaz Romzi Nagib
-            </span>
+        <div className="hero-bottom">
+          <div className="hero-role" data-in style={{ "--d": 1 }}>
+            <small className="mono">( currently )</small>
+            <Rotator />
           </div>
-        </div>
-
-        {/* Main Typography (GSAP Text Reveal) */}
-        <div ref={textRef} className="max-w-3xl overflow-hidden">
-          <h1 className="font-bold text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight tracking-tight">
-            {/* Kita pecah jadi kata per kata buat animasi GSAP */}
-            <span className="inline-block mr-3 hero-word">Creative</span>
-            <span className="inline-block bg-clip-text bg-linear-to-r from-utama to-teal-400 mr-3 text-transparent hero-word">
-              Developer
-            </span>
-            <br />
-            <span className="inline-block mr-3 hero-word">&</span>
-            <span className="inline-block hero-word">Designer.</span>
-          </h1>
-        </div>
-
-        {/* Description & Status (Clean Layout) */}
-        <div className="flex md:flex-row flex-col md:justify-between md:items-end gap-6 mt-10 max-w-4xl intro-item">
-          {/* Left: Bio */}
-          <div className="max-w-md">
-            <p className="text-slate-400 text-base md:text-lg leading-relaxed">
-              A 10th-grade student passionate about building functional and
-              aesthetic digital solutions. Let's turn ideas into reality.
+          <div className="hero-copy" data-in style={{ "--d": 2 }}>
+            <p>
+              Saya membangun website yang cepat, ekspresif, dan terasa hidup — sambil terus merilis
+              sesuatu yang baru. Scroll untuk melihat hasilnya.
             </p>
-
-            {/* Buttons */}
-            <div className="flex items-center gap-4 mt-8">
-              <motion.a
-                href="#myProject"
-                onMouseMove={magneticHover}
-                onMouseLeave={magneticLeave}
-                className="group flex items-center gap-2 bg-utama shadow-lg shadow-utama/20 hover:shadow-utama/40 px-6 py-3 rounded-lg font-semibold text-white text-sm transition-shadow duration-300">
-                View Projects
-                <ChevronRight
-                  size={16}
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </motion.a>
-
-              <a
-                href="#contact"
-                className="font-semibold text-slate-400 hover:text-white text-sm transition-colors duration-300">
-                Contact Me
+            <div className="cta-row">
+              <a href="#work" className="btn btn-solid" data-magnetic onClick={(e) => (e.preventDefault(), scrollToId("work"))}>
+                Lihat karya <Icon n="arrow" size={18} />
+              </a>
+              <a href="#contact" className="btn btn-ghost" data-magnetic onClick={(e) => (e.preventDefault(), scrollToId("contact"))}>
+                Say hello
               </a>
             </div>
           </div>
-
-          {/* Right: Mini Stats/Status (Portfolio Credibility) */}
-          <div className="hidden md:block bg-white/5 backdrop-blur-sm p-6 border border-white/10 rounded-2xl">
-            <div className="flex items-center gap-4 mb-3">
-              <Sparkles size={16} className="text-utama" />
-              <span className="font-bold text-white text-sm uppercase tracking-wider">
-                Status
-              </span>
-            </div>
-            <p className="text-slate-400 text-sm">
-              Currently open for{" "}
-              <span className="font-medium text-white">freelance</span> projects
-              & collaborations.
-            </p>
-          </div>
+          <button className="badge" data-in style={{ "--d": 3 }} onClick={() => scrollToId("about")} aria-label="Scroll ke bawah" data-magnetic>
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <path id="circ" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0" />
+              </defs>
+              <text>
+                <textPath href="#circ" textLength="284" lengthAdjust="spacing">SCROLL • DOWN • SCROLL • DOWN •</textPath>
+              </text>
+            </svg>
+            <Icon n="down" size={26} stroke={1.6} />
+          </button>
         </div>
       </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
-        className="bottom-10 left-1/2 z-20 absolute flex flex-col items-center gap-3 text-slate-500 -translate-x-1/2">
-        <span className="text-[10px] uppercase tracking-[4px]">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}>
-          <ArrowDown size={16} className="text-utama/80" />
-        </motion.div>
-      </motion.div>
-
-      {/* Decorative Frame (Legacy) */}
-      <div className="hidden md:block z-10 absolute inset-0 md:m-10 p-8 border border-white/5 rounded-3xl pointer-events-none" />
     </section>
   );
 }
